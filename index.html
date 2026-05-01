@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>IonBots – Autonomous Intelligence Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #F5F2ED;
+            overflow-x: hidden;
+            color: #1A2A2F;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+        body::after {
+            content: "";
+            position: fixed; inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 40%, transparent 55%, rgba(0,0,0,0.04));
+            z-index: 200;
+        }
+        #loader {
+            position: fixed; bottom: 24px; right: 24px;
+            background: rgba(0,0,0,0.72); backdrop-filter: blur(10px);
+            color: #F0C674; padding: 7px 18px; border-radius: 40px;
+            font-size: 12px; font-family: monospace; z-index: 300;
+            pointer-events: none; transition: opacity 0.5s;
+        }
+        #swarmCanvas {
+            position: fixed; inset: 0; width: 100vw; height: 100vh;
+            display: block; z-index: 0; pointer-events: none;
+        }
+        .content { position: relative; z-index: 10; background: transparent; }
+        .navbar {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(245,242,237,0.9); backdrop-filter: blur(14px);
+            border-bottom: 1px solid #E2DCD2;
+            padding: 0.7rem 1.8rem;
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;
+        }
+        .logo { display: flex; align-items: center; gap: 9px; font-family: 'Space Grotesk', sans-serif; font-size: 1.55rem; font-weight: 800; }
+        .logo-icon {
+            width: 34px; height: 34px; background: linear-gradient(145deg, #235B73, #E06E2E);
+            border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .logo-icon span { font-size: 21px; font-weight: 600; color: #fff; }
+        .logo-text { background: linear-gradient(135deg, #235B73, #E06E2E); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .nav-links { display: flex; flex-wrap: wrap; gap: 1.4rem; align-items: center; }
+        .nav-links a { text-decoration: none; font-weight: 500; color: #4A5A62; transition: color 0.2s; font-size: 0.88rem; }
+        .nav-links a:hover { color: #E06E2E; }
+        .btn-demo { background: #235B73; padding: 0.38rem 1.2rem; border-radius: 2rem; color: #fff !important; font-weight: 600; font-size: 0.85rem; }
+        .btn { display: inline-block; padding: 0.6rem 1.4rem; border-radius: 2.5rem; font-weight: 600; transition: transform 0.2s; cursor: pointer; border: none; font-family: inherit; text-decoration: none; font-size: 0.9rem; }
+        .btn-primary { background: #235B73; color: #fff; box-shadow: 0 4px 10px rgba(35,91,115,0.15); }
+        .btn-secondary { background: transparent; border: 1.5px solid #CFD9DF; color: #235B73; }
+        .btn-primary:hover, .btn-secondary:hover { transform: translateY(-2px); }
+        .container { max-width: 1280px; margin: 0 auto; padding: 0 1.8rem; }
+        .hero { min-height: 84vh; display: flex; align-items: center; padding: 2rem 0; }
+        .hero h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.2rem,6vw,3.8rem); font-weight: 700; line-height: 1.18; background: linear-gradient(135deg, #235B73, #E06E2E); background-clip: text; -webkit-background-clip: text; color: transparent; }
+        .hero .tagline { font-weight: 600; font-size: 1.05rem; margin-top: 1rem; color: #E06E2E; }
+        .hero p { font-size: 1rem; color: #4A5A62; max-width: 550px; margin-top: 0.9rem; }
+        .section { padding: 3.8rem 0; border-top: 1px solid rgba(0,0,0,0.05); }
+        .section h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.7rem; font-weight: 600; margin-bottom: 0.7rem; color: #235B73; }
+        .grid-3, .grid-2 { display: grid; gap: 1.7rem; margin-top: 1rem; }
+        .grid-3 { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        .grid-2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .card {
+            background: rgba(255,255,248,0.8); backdrop-filter: blur(8px);
+            border: 1px solid #E6DFD3; border-radius: 1.4rem; padding: 1.5rem;
+            transition: transform 0.25s, box-shadow 0.25s; box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+        }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 14px 30px rgba(0,0,0,0.07); border-color: rgba(224,110,46,0.35); }
+        .footer { text-align: center; padding: 1.5rem; font-size: 0.74rem; border-top: 1px solid rgba(0,0,0,0.05); color: #6A7A8A; background: rgba(245,242,237,0.75); backdrop-filter: blur(4px); }
+        .roi-box { background: rgba(255,255,248,0.85); border-radius: 1.4rem; padding: 1.5rem; box-shadow: 0 6px 20px rgba(0,0,0,0.03); border: 1px solid #E6DFD3; max-width: 580px; }
+        .roi-slider { width: 100%; margin: 0.8rem 0 1.1rem; accent-color: #E06E2E; }
+        @media (max-width: 720px) {
+            .navbar { flex-direction: column; align-items: stretch; text-align: center; padding: 0.6rem 1rem; }
+            .container { padding: 0 1rem; }
+            .hero { min-height: 65vh; }
+            #loader { bottom: 16px; right: 16px; padding: 6px 14px; font-size: 11px; }
+            .btn { padding: 0.5rem 1.2rem; font-size: 0.85rem; }
+            .section { padding: 2.5rem 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loader">⚡ IonBots swarm activating…</div>
+    <canvas id="swarmCanvas"></canvas>
+
+    <div class="content">
+        <nav class="navbar">
+            <div class="logo"><div class="logo-icon"><span>⚡</span></div><div class="logo-text">IONBOTS</div></div>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#platform">Platform</a>
+                <a href="#systems">Systems</a>
+                <a href="#roi">ROI</a>
+                <a href="mailto:hello@ionbots.ai" class="btn-demo">Contact</a>
+            </div>
+        </nav>
+        <div class="container">
+            <section class="hero" id="about">
+                <div>
+                    <h1>Autonomous Intelligence<br>for the Edge</h1>
+                    <div class="tagline">Orchestrate · Adapt · Scale</div>
+                    <p>IonBots delivers a unified platform for cognitive robotics, distributed AI, and edge-native infrastructure – trusted by industry leaders worldwide.</p>
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:1.5rem">
+                        <a href="#platform" class="btn btn-primary">Explore Platform ↓</a>
+                        <a href="#roi" class="btn btn-secondary">Calculate ROI</a>
+                    </div>
+                </div>
+            </section>
+            <section class="section" id="platform">
+                <h2>IonBots Platform</h2>
+                <div class="grid-3">
+                    <div class="card"><h3>🧠 Cognitive Core</h3><p>Multi-agent reasoning and adaptive decision engines.</p></div>
+                    <div class="card"><h3>⚙️ Execution Fabric</h3><p>Robot orchestration, real‑time control, fleet coordination.</p></div>
+                    <div class="card"><h3>🌐 Edge Mesh</h3><p>Distributed data, low‑latency inference, global scale.</p></div>
+                </div>
+            </section>
+            <section class="section" id="systems">
+                <h2>Systems We Build</h2>
+                <div class="grid-3">
+                    <div class="card"><h3>🤖 Autonomous Robotics</h3><p>Fleet orchestration, perception, predictive maintenance.</p></div>
+                    <div class="card"><h3>🧠 Multi‑Agent AI</h3><p>Reinforcement learning, LLM orchestration, adaptive workflows.</p></div>
+                    <div class="card"><h3>⚙️ Distributed Edge</h3><p>Cloud‑native, ROS2 to K8s, real‑time observability.</p></div>
+                </div>
+            </section>
+            <section class="section" id="roi">
+                <h2>ROI Simulator</h2>
+                <div class="roi-box">
+                    <label>Number of agents:&nbsp;<strong id="botCountVal">500</strong></label>
+                    <input type="range" id="roiBots" class="roi-slider" min="50" max="5000" value="500" step="10">
+                    <label>Monthly savings per agent ($):&nbsp;<strong id="savingsPerBotVal">1250</strong></label>
+                    <input type="range" id="roiSavings" class="roi-slider" min="400" max="3500" value="1250" step="50">
+                    <div style="margin-top:1rem;font-size:1.3rem;font-weight:700;color:#235B73">💰 Annual ROI: <span id="roiResult">$7.50M</span></div>
+                </div>
+            </section>
+        </div>
+        <div class="footer">© 2025 IonBots · <a href="mailto:hello@ionbots.ai">hello@ionbots.ai</a></div>
+    </div>
+
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script>
+    (() => {
+        if (typeof THREE === 'undefined') {
+            document.getElementById('loader').textContent = '3D unavailable.';
+            return;
+        }
+
+        const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        const lowEnd = isMobile || (navigator.hardwareConcurrency || 4) <= 4;
+        const PX_RATIO = Math.min(window.devicePixelRatio, 1.3);
+        const ROBOT_COUNT = 7;
+        const SPRITE_COUNT = 60;
+        const STAR_COUNT = lowEnd ? 400 : 700;
+        const MAX_LINES = 140;
+        const LINE_UPDATE_MS = 300;
+        const MAX_DIST_SQ = 3.2 * 3.2;
+        const BASE_RADIUS = lowEnd ? 2.0 : 2.6;
+
+        const canvas = document.getElementById('swarmCanvas');
+        const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowEnd });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(PX_RATIO);
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xF5F2ED);
+        scene.fog = new THREE.FogExp2(0xF5F2ED, 0.03);
+
+        const world = new THREE.Group();
+        scene.add(world);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.3, 25);
+        camera.position.set(6, 3.2, 8);
+
+        // ── Lighting ────────────────────────────────────────
+        scene.add(new THREE.AmbientLight(0x404060, 0.7));
+        scene.add(new THREE.HemisphereLight(0xfaf8f0, 0x445566, 0.55));
+        const dirLight = new THREE.DirectionalLight(0xfff5e0, 0.9);
+        dirLight.position.set(4, 6, 3);
+        scene.add(dirLight);
+        const pl1 = new THREE.PointLight(0x88aacc, 0.4, 9);
+        pl1.position.set(-1.5, 1.5, 3);
+        scene.add(pl1);
+        const pl2 = new THREE.PointLight(0xffaa77, 0.35, 8);
+        pl2.position.set(0, 1, -4);
+        scene.add(pl2);
+        const coreGlow = new THREE.PointLight(0xE6B422, 1.6, 10);
+        coreGlow.position.set(0, 0, 0);
+        world.add(coreGlow);
+
+        // ── Yellow Sun ──────────────────────────────────────
+        const core = new THREE.Mesh(
+            new THREE.SphereGeometry(0.55, 48, 48),
+            new THREE.MeshStandardMaterial({ color: 0xFFD700, emissive: 0xFF8C00, emissiveIntensity: 0.9 })
+        );
+        world.add(core);
+
+        // Corona rings (depthWrite false to avoid visual artefacts)
+        const coronaMats = [
+            new THREE.MeshBasicMaterial({ color: 0xFFA500, transparent: true, opacity: 0.12, side: THREE.DoubleSide, depthWrite: false }),
+            new THREE.MeshBasicMaterial({ color: 0xFFCC00, transparent: true, opacity: 0.08, side: THREE.DoubleSide, depthWrite: false }),
+            new THREE.MeshBasicMaterial({ color: 0xFFE066, transparent: true, opacity: 0.06, side: THREE.DoubleSide, depthWrite: false })
+        ];
+        const coronas = [];
+        coronaMats.forEach((mat, i) => {
+            const ring = new THREE.Mesh(new THREE.RingGeometry(0.8 + i * 0.2, 1.0 + i * 0.25, 64), mat);
+            ring.rotation.x = -Math.PI / 2;
+            ring.userData.speed = 0.0008 + i * 0.0004;
+            world.add(ring);
+            coronas.push(ring);
+        });
+
+        // ── Shared geometries & materials ───────────────────
+        const bodyGeo  = new THREE.BoxGeometry(0.24, 0.32, 0.18);
+        const headGeo  = new THREE.SphereGeometry(0.14, 8, 8);
+        const armGeo   = new THREE.CylinderGeometry(0.05, 0.05, 0.22, 6);
+        const legGeo   = new THREE.CylinderGeometry(0.06, 0.06, 0.2,  6);
+        const eyeGeo   = new THREE.SphereGeometry(0.04,  4, 4);
+        const pupilGeo = new THREE.SphereGeometry(0.022, 4, 4);
+        const antGeo   = new THREE.CylinderGeometry(0.02, 0.02, 0.15, 4);
+        const ballGeo  = new THREE.SphereGeometry(0.04,  4, 4);
+
+        const darkMat    = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.7 });
+        const eyeWhiteMat = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
+        const eyePupilMat = new THREE.MeshStandardMaterial({ color: 0x000000 });
+        const antMat     = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.8 });
+        const ballMat    = new THREE.MeshStandardMaterial({ color: 0xFFB6C1, emissive: 0x330000 });
+
+        const robotColors = [0xFDE2E4, 0xFAD9D9, 0xFBEEC1, 0xE2F0CB, 0xD4E2D4, 0xE8D5B7, 0xFDE8E9];
+
+        function addMesh(group, geo, mat, x, y, z, rx, rz) {
+            const mesh = new THREE.Mesh(geo, mat);
+            if (x !== undefined) mesh.position.set(x, y, z);
+            if (rx !== undefined) mesh.rotation.x = rx;
+            if (rz !== undefined) mesh.rotation.z = rz;
+            group.add(mesh);
+            return mesh;
+        }
+
+        function createRobot(idx) {
+            const group = new THREE.Group();
+            const bodyMat = new THREE.MeshStandardMaterial({
+                color: robotColors[idx % robotColors.length],
+                roughness: 0.5, metalness: 0.15
+            });
+            addMesh(group, bodyGeo, bodyMat, 0, 0, 0);
+            addMesh(group, headGeo, bodyMat, 0, 0.28, 0);
+            addMesh(group, eyeGeo, eyeWhiteMat, -0.06, 0.32, 0.12);
+            addMesh(group, eyeGeo, eyeWhiteMat,  0.06, 0.32, 0.12);
+            addMesh(group, pupilGeo, eyePupilMat, -0.06, 0.32, 0.14);
+            addMesh(group, pupilGeo, eyePupilMat,  0.06, 0.32, 0.14);
+            const la = addMesh(group, armGeo, darkMat, -0.18, 0.12, 0); la.rotation.z = 0.3;
+            const ra = addMesh(group, armGeo, darkMat,  0.18, 0.12, 0); ra.rotation.z = -0.3;
+            addMesh(group, legGeo, darkMat, -0.08, -0.26, 0);
+            addMesh(group, legGeo, darkMat,  0.08, -0.26, 0);
+            if (idx % 3 === 0) {
+                addMesh(group, antGeo,  antMat,  0, 0.41, 0);
+                addMesh(group, ballGeo, ballMat, 0, 0.5,  0);
+            }
+            return group;
+        }
+
+        const agents = [];
+        const orbitData = [];
+        const ringRadius = BASE_RADIUS * 0.9;
+
+        for (let i = 0; i < ROBOT_COUNT; i++) {
+            const angle = (i / ROBOT_COUNT) * Math.PI * 2;
+            const height = (Math.random() - 0.5) * 1.2;
+            const robot = createRobot(i);
+            robot.scale.setScalar(0.8 + Math.random() * 0.2);
+            world.add(robot);
+            agents.push(robot);
+            orbitData.push({
+                radius: ringRadius,
+                angle: angle,
+                speed: 0.2 + Math.random() * 0.3,
+                height: height,
+                heightSpeed: 0.3 + Math.random() * 0.5,
+                heightAmp: 0.4 + Math.random() * 0.6,
+                radiusVariance: (Math.random() - 0.5) * 0.4
+            });
+        }
+
+        // ── Emoji sprites ───────────────────────────────────
+        const researchEmojis = [
+            '🤖','👤','👷','🧑‍💻','🦾','👨‍🔧','👩‍🔬','🧠','⚡','👾',
+            '💡','🔧','🛠️','📡','🧬','🔬','🧪','🔭','📊','🧲',
+            '🔋','💻','🖥️','🚀','🛰️','📈','🗂️','💾','🧮','🔍'
+        ];
+        const spriteMats = researchEmojis.map(emoji => {
+            const c = document.createElement('canvas');
+            c.width = 64; c.height = 64;
+            const ctx = c.getContext('2d');
+            ctx.font = '48px serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(emoji, 32, 32);
+            const tex = new THREE.CanvasTexture(c);
+            tex.minFilter = tex.magFilter = THREE.LinearFilter;
+            return new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, depthTest: false });
+        });
+
+        const sprites = [];
+        const spriteOrbitData = [];
+        for (let i = 0; i < SPRITE_COUNT; i++) {
+            const sprite = new THREE.Sprite(spriteMats[i % spriteMats.length]);
+            const radius = BASE_RADIUS * (0.9 + Math.random() * 1.2);
+            const angle  = Math.random() * Math.PI * 2;
+            const height = (Math.random() - 0.5) * 3.0;
+            sprite.position.set(Math.cos(angle) * radius, height, Math.sin(angle) * radius);
+            sprite.scale.set(0.45, 0.45, 1);
+            world.add(sprite);
+            sprites.push(sprite);
+            spriteOrbitData.push({
+                radius, angle, height,
+                speed:       0.1 + Math.random() * 0.3,
+                heightSpeed: 0.2 + Math.random() * 0.5,
+                heightAmp:   0.5 + Math.random() * 0.7
+            });
+        }
+
+        // ── Starfield ───────────────────────────────────────
+        const starBuf = new Float32Array(STAR_COUNT * 3);
+        for (let s = 0; s < STAR_COUNT; s++) {
+            starBuf[s*3]   = (Math.random() - 0.5) * 32;
+            starBuf[s*3+1] = (Math.random() - 0.5) * 20;
+            starBuf[s*3+2] = (Math.random() - 0.5) * 22 - 9;
+        }
+        const starGeo = new THREE.BufferGeometry();
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starBuf, 3));
+        world.add(new THREE.Points(starGeo, new THREE.PointsMaterial({
+            color: 0xb5c8e6, size: 0.05, transparent: true, opacity: 0.5, depthWrite: false
+        })));
+
+        // ── Network lines (throttled update) ──────────────────
+        const lineBuf = new Float32Array(MAX_LINES * 6);
+        const lineGeo = new THREE.BufferGeometry();
+        lineGeo.setAttribute('position', new THREE.BufferAttribute(lineBuf, 3));
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xF0D080, transparent: true, opacity: 0.28, depthWrite: false });
+        world.add(new THREE.LineSegments(lineGeo, lineMat));
+        let lastLineUpdate = 0;
+
+        function updateLines(now) {
+            if (now - lastLineUpdate < LINE_UPDATE_MS) return;
+            lastLineUpdate = now;
+            let ptr = 0;
+            for (let i = 0; i < agents.length && ptr < lineBuf.length - 6; i++) {
+                const a = agents[i].position;
+                const b = sprites[(i * 7) % sprites.length].position;
+                const dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+                if (dx*dx + dy*dy + dz*dz < MAX_DIST_SQ) {
+                    lineBuf[ptr++] = a.x; lineBuf[ptr++] = a.y; lineBuf[ptr++] = a.z;
+                    lineBuf[ptr++] = b.x; lineBuf[ptr++] = b.y; lineBuf[ptr++] = b.z;
+                }
+            }
+            lineGeo.attributes.position.array.set(lineBuf);
+            lineGeo.attributes.position.needsUpdate = true;
+            lineGeo.setDrawRange(0, ptr / 3);
+        }
+
+        // ── Scroll tracking ─────────────────────────────────
+        let scrollPos = 0, targetScroll = 0;
+        window.addEventListener('scroll', () => {
+            const maxScroll = Math.max(document.body.scrollHeight - window.innerHeight, 1);
+            targetScroll = Math.min(Math.max(window.scrollY / maxScroll, 0), 1);
+        }, { passive: true });
+
+        // ── Mouse interaction ───────────────────────────────
+        const mouse = { x: 0, y: 0 };
+        window.addEventListener('mousemove', (e) => {
+            mouse.x = (e.clientX / window.innerWidth)  *  2 - 1;
+            mouse.y = (e.clientY / window.innerHeight)  * -2 + 1;
+        }, { passive: true });
+
+        // ── Animation loop with adaptive quality ────────────
+        let time = 0, lastFrame = performance.now();
+        let fpsFrames = 0, fpsLast = performance.now();
+
+        function animate(now) {
+            requestAnimationFrame(animate);
+            const dt = Math.min(0.1, (now - lastFrame) / 1000);
+            lastFrame = now;
+            time += dt;
+
+            // FPS-based pixel ratio adjustment
+            fpsFrames++;
+            if (now - fpsLast >= 1000) {
+                const fps = fpsFrames;
+                fpsFrames = 0; fpsLast = now;
+                if (fps < 30 && renderer.getPixelRatio() > 1) renderer.setPixelRatio(1);
+                else if (fps > 50 && renderer.getPixelRatio() < PX_RATIO) renderer.setPixelRatio(PX_RATIO);
+            }
+
+            scrollPos += (targetScroll - scrollPos) * 0.05;
+            const t0 = scrollPos;
+            const activationFactor  = Math.max(0, Math.min(1, (t0 - 0.2) / 0.3));
+            const coordinationFactor = Math.max(0, Math.min(1, (t0 - 0.5) / 0.3));
+            const fullFactor         = Math.max(0, Math.min(1, (t0 - 0.8) / 0.2));
+            const speedMultiplier    = 1 + activationFactor * 1.5 + coordinationFactor * 1.0 + fullFactor * 0.5;
+            const cameraDistance     = 8 - (activationFactor * 1.5 + coordinationFactor * 2 + fullFactor * 1);
+            const lightBoost         = 1 + activationFactor * 0.5 + coordinationFactor * 0.8;
+            const spreadFactor       = 1 + activationFactor * 0.3 + coordinationFactor * 0.5;
+
+            // Sun animation
+            core.rotation.y += 0.01 * speedMultiplier;
+            core.scale.setScalar(1 + Math.sin(time * 1.8) * 0.05);
+            core.material.emissiveIntensity = 0.85 + Math.sin(time * 2.5) * 0.25;
+            coreGlow.intensity = (1.5 + Math.sin(time * 2.2) * 0.35) * lightBoost;
+            coronas.forEach(c => { c.rotation.y += c.userData.speed * speedMultiplier * 1.5; });
+
+            // Robots
+            for (let i = 0; i < agents.length; i++) {
+                const od = orbitData[i];
+                od.angle += od.speed * dt * speedMultiplier;
+                const r = (od.radius + od.radiusVariance * Math.sin(time * 1.5 + i)) * spreadFactor;
+                const x = Math.cos(od.angle) * r * 0.98;
+                const z = Math.sin(od.angle) * r * 0.98;
+                const y = od.height + Math.sin(time * od.heightSpeed + i) * od.heightAmp * (1 + activationFactor);
+                agents[i].position.set(x, y, z);
+                agents[i].rotation.y += 0.01 * speedMultiplier;
+            }
+
+            // Sprites
+            for (let i = 0; i < sprites.length; i++) {
+                const so = spriteOrbitData[i];
+                so.angle += so.speed * dt * speedMultiplier * 0.8;
+                const r = so.radius * spreadFactor;
+                sprites[i].position.set(
+                    Math.cos(so.angle) * r,
+                    so.height + Math.sin(time * so.heightSpeed + i) * so.heightAmp,
+                    Math.sin(so.angle) * r
+                );
+            }
+
+            // Camera smooth follow
+            camera.position.x += (6 - t0 * 1.5 + mouse.x * 0.8 - camera.position.x) * 0.02;
+            camera.position.y += (3.2 - t0 * 0.5 + mouse.y * 0.5 - camera.position.y) * 0.02;
+            camera.position.z += (cameraDistance - camera.position.z) * 0.02;
+            camera.lookAt(0, 0, 0);
+
+            world.rotation.y += 0.0012 * speedMultiplier;
+            world.rotation.x += Math.sin(time * 0.15) * 0.0004;
+            world.rotation.z += Math.cos(time * 0.15) * 0.0003;
+
+            updateLines(now);
+            renderer.render(scene, camera);
+        }
+        requestAnimationFrame(animate);
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.display = 'none'; }, 500); }
+        }, 1000);
+
+        // ── ROI Calculator ──────────────────────────────────
+        const roiBotsEl    = document.getElementById('roiBots');
+        const roiSavingsEl = document.getElementById('roiSavings');
+        const botCountEl   = document.getElementById('botCountVal');
+        const savingsEl    = document.getElementById('savingsPerBotVal');
+        const roiResultEl  = document.getElementById('roiResult');
+
+        function calcROI() {
+            const bots    = parseInt(roiBotsEl.value)    || 500;
+            const savings = parseInt(roiSavingsEl.value) || 1250;
+            botCountEl.textContent = bots;
+            savingsEl.textContent  = savings;
+            const annual = bots * savings * 12 * (1 + Math.log(Math.max(bots, 1)) / 14) * 0.82;
+            roiResultEl.textContent = '$' + (annual / 1e6).toFixed(2) + 'M';
+        }
+        roiBotsEl.addEventListener('input', calcROI);
+        roiSavingsEl.addEventListener('input', calcROI);
+        calcROI();
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', e => {
+                const href = anchor.getAttribute('href');
+                if (!href || href === '#') return;
+                const target = document.querySelector(href);
+                if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
+            });
+        });
+    })();
+    </script>
+</body>
+</html>
